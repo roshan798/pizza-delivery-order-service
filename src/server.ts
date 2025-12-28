@@ -1,13 +1,15 @@
 import app from './app';
-import { Config } from './confiig';
-import logger from './confiig/logger';
+import logger from './config/logger';
+import initDB from './config/db';
+import { Config } from './config';
 
-const startServer = () => {
-	const url = Config.URL;
+const startServer = async () => {
 	const port = Config.PORT;
+	await initDB();
+
 	try {
 		app.listen(port, () => {
-			logger.info(`Server is running on ${url}`);
+			logger.info(`Server is running on ${port}`);
 		});
 	} catch (error) {
 		logger.error('Error starting the server:', error);
@@ -15,4 +17,9 @@ const startServer = () => {
 	}
 };
 
-startServer();
+(async () => {
+	await startServer();
+})().catch((error) => {
+	logger.error('Fatal error starting server:', error);
+	process.exit(1);
+});

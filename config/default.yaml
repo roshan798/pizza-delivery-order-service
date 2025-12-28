@@ -1,0 +1,18 @@
+app:
+    name: Order Service
+    version: 1.0.0
+    description: Service for managing orders and billing
+NODE_ENV: development
+client:
+    urls: http://localhost:5173,http://localhost:4173,http://localhost:3000,
+server:
+    port: 8083
+    host: localhost
+
+database:
+    url: mongodb://root:root@localhost:27017/order?authSource=admin
+    name: order
+    user: root
+    password: root
+auth:
+    jwksUri: http://localhost:8081/.well-known/jwks.json

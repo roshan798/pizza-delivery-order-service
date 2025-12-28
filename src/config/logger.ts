@@ -1,9 +1,9 @@
 import winston from 'winston';
-
+import config from 'config';
 const logger = winston.createLogger({
 	level: 'info',
 	defaultMeta: {
-		service: 'auth-service',
+		service: 'order-service',
 	},
 	format: winston.format.combine(
 		winston.format.timestamp(),
@@ -17,6 +17,7 @@ const logger = winston.createLogger({
 				winston.format.colorize(),
 				winston.format.simple()
 			),
+			silent: config.get('NODE_ENV') === 'test',
 		}),
 		new winston.transports.File({
 			filename: 'logs/error.log',
@@ -25,6 +26,7 @@ const logger = winston.createLogger({
 				winston.format.timestamp(),
 				winston.format.json()
 			),
+			silent: config.get('NODE_ENV') === 'test',
 		}),
 		new winston.transports.File({
 			filename: 'logs/combined.log',
@@ -32,6 +34,7 @@ const logger = winston.createLogger({
 				winston.format.timestamp(),
 				winston.format.json()
 			),
+			silent: config.get('NODE_ENV') === 'test',
 		}),
 	],
 });
