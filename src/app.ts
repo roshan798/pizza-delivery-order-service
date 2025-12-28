@@ -11,8 +11,8 @@ const app = express();
 // CORS configuration
 const urls = Config.CLIENT_URLS;
 const corsOptions: cors.CorsOptions = {
-	origin: urls,
-	credentials: true,
+		origin: urls,
+		credentials: true,
 };
 ;
 app.use(cors(corsOptions)as unknown as RequestHandler);
