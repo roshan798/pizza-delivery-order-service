@@ -1,32 +1,37 @@
-import express, { NextFunction, Request, Response, RequestHandler } from 'express';
+import express, {
+	NextFunction,
+	Request,
+	Response,
+	RequestHandler,
+} from 'express';
 import { HttpError } from 'http-errors';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import logger from './config/logger';
+
 import { Config } from './config';
+import logger from './config/logger';
+import customerRouter from './customer/customer-router';
 
 const app = express();
-
 
 // CORS configuration
 const urls = Config.CLIENT_URLS;
 const corsOptions: cors.CorsOptions = {
-		origin: urls,
-		credentials: true,
+	origin: urls,
+	credentials: true,
 };
-;
-app.use(cors(corsOptions)as unknown as RequestHandler);
-
+app.use(cors(corsOptions) as unknown as RequestHandler);
 
 app.get('/', (req, res) => {
 	res.json({ message: 'Welcome to Order-Service 👋' });
 });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); 
+app.use(cookieParser());
 
 // routes
 
+app.use('/customer', customerRouter);
 
 // globlal error handler
 

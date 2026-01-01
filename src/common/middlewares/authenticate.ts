@@ -1,13 +1,13 @@
-import { expressjwt } from 'express-jwt';
+import { expressjwt, Params } from 'express-jwt';
 import jwksClient from 'jwks-rsa';
 import { Request } from 'express';
-import config from 'config';
 import logger from '../../config/logger';
-import { AuthCookie } from '../types';
+import { Config } from '../../config';
+import { AuthCookie } from '../../types';
 
-export default expressjwt({
+const options: Params = {
 	secret: jwksClient.expressJwtSecret({
-		jwksUri: config.get('auth.jwksUri'),
+		jwksUri: Config.AUTH_JWKS_URI,
 		cache: true,
 		rateLimit: true,
 	}),
@@ -23,4 +23,6 @@ export default expressjwt({
 		logger.debug(`🍪 Token from cookie: ${token}`);
 		return token;
 	},
-});
+};
+
+export default expressjwt(options);
