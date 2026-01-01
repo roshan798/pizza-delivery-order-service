@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import logger from '../../config/logger';
-import { AuthRequest } from '../types';
+import { AuthRequest } from '../../types';
 
 export default function canAccess(roles: string[]) {
 	return (_req: Request, res: Response, next: NextFunction) => {

@@ -11,4 +11,3 @@ describe('App', () => {
 		expect(response.statusCode).toBe(200);
 	});
 });
-
