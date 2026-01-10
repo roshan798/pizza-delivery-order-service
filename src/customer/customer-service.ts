@@ -144,7 +144,6 @@ class CustomerService {
 				`Customer not found with email: ${email}`
 			);
 		}
-		console.log(contact);
 		logger.debug(`Customer found with email: ${email}`);
 		if (contact.isPrimary) {
 			customer.Contact.forEach((cont) => (cont.isPrimary = false));

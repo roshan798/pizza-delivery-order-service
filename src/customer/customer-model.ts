@@ -3,6 +3,23 @@ const AddressSchema = new mongoose.Schema({
 	address: {
 		type: String,
 		required: true,
+		minLength: 10,
+		maxLength: 255,
+		trim: true,
+	},
+	city: {
+		type: String,
+		required: true,
+		minLength: 2,
+		maxLength: 50,
+		trim: true,
+	},
+	zipCode: {
+		type: String,
+		required: true,
+		minLength: 6,
+		maxLength: 6,
+		trim: true,
 	},
 	isPrimary: {
 		type: Boolean,
@@ -15,6 +32,9 @@ const ContactSchema = new mongoose.Schema({
 		type: String,
 		default: '+91',
 		required: true,
+		minLength: 2,
+		maxLength: 4,
+		trim: true,
 	},
 	contact: {
 		type: String,
@@ -39,20 +59,32 @@ const CustomerSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 			unique: true,
+			trim: true,
 		},
 		firstName: {
 			type: String,
 			required: true,
+			minLength: 2,
+			maxLength: 50,
+			trim: true,
 		},
 		lastName: {
 			type: String,
 			required: true,
+			minLength: 2,
+			maxLength: 50,
+			trim: true,
 		},
 		email: {
 			type: String,
 			required: true,
 			unique: true,
 			index: true,
+			match: [
+				/^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$/,
+				'Please fill a valid email address',
+			],
+			trim: true,
 		},
 		Contact: {
 			type: [ContactSchema],

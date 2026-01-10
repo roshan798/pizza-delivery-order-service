@@ -4,6 +4,8 @@ export interface Address {
 	_id?: string;
 	address: string;
 	isPrimary: boolean;
+	city: string;
+	zipCode: string;
 }
 export interface Contact {
 	_id?: string;
