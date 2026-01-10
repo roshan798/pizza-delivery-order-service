@@ -57,10 +57,11 @@ class CustomerService {
 		if (address.isPrimary) {
 			customer.address.forEach((addr) => (addr.isPrimary = false));
 		}
-		customer.address.push({
-			address: address.address,
-			isPrimary: !!address.isPrimary,
-		});
+		if (address._id) {
+			delete address._id;
+		}
+
+		customer.address.push(address);
 		await customer.save();
 		logger.debug(`Address added for customer with email: ${email}`);
 		logger.info('Exiting addAddress of CustomerService');
@@ -148,6 +149,7 @@ class CustomerService {
 		if (contact.isPrimary) {
 			customer.Contact.forEach((cont) => (cont.isPrimary = false));
 		}
+		console.log({ contact });
 		customer.Contact.push(contact);
 		await customer.save();
 		logger.debug(`Contact added for customer with email: ${email}`);
