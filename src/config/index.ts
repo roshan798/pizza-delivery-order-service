@@ -11,4 +11,5 @@ export const Config = {
 	DB_USER: config.get<string>('database.user'),
 	DB_PASSWORD: config.get<string>('database.password'),
 	AUTH_JWKS_URI: config.get<string>('auth.jwksUri'),
+	BROKERS: config.get<string>('kafka.brokers').split(','),
 };
