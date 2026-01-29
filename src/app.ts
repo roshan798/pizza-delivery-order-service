@@ -11,6 +11,7 @@ import cors from 'cors';
 import { Config } from './config';
 import logger from './config/logger';
 import customerRouter from './customer/customer-router';
+import orderRouter from './order/orderRouter';
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use(cookieParser());
 // routes
 
 app.use('/customer', customerRouter);
+app.use('/orders', orderRouter);
 
 // globlal error handler
 

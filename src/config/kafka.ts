@@ -39,7 +39,7 @@ export class KafkaMessageBroker implements MessageBroker {
 	}
 	async consumeMessages(
 		topic: string[],
-		fromBeginning: boolean = false
+		fromBeginning: boolean = true
 	): Promise<void> {
 		await this.consumer.subscribe({
 			topics: topic,

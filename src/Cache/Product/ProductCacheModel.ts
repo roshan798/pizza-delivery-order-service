@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 const PriceConfigurationSchema = new mongoose.Schema({
 	priceType: {
@@ -11,11 +11,11 @@ const PriceConfigurationSchema = new mongoose.Schema({
 	},
 });
 
-const ProductCacheModel = new mongoose.Schema(
+const ProductCacheModel = new mongoose.Schema<ProductCache>(
 	{
 		productId: { type: String, required: true, unique: true },
 		priceConfiguration: {
-			type: Object,
+			type: Map,
 			of: PriceConfigurationSchema,
 		},
 		tenantId: { type: String, required: true },
@@ -38,11 +38,14 @@ export interface PriceConfiguration {
 	availableOptions: Map<string, number>;
 }
 
-export interface ProductCache {
+export interface ProductCache extends Document {
 	productId: string;
 	priceConfiguration: Map<string, PriceConfiguration>;
 	tenantId: string;
+	createdAt: Date;
+	updatedAt: Date;
 }
+
 export interface ProductMessage {
 	productId: string;
 	priceConfiguration: Map<string, PriceConfiguration>;

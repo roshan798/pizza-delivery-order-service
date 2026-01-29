@@ -1,3 +1,4 @@
+import { Request } from 'express';
 export const Roles = {
 	ADMIN: 'admin',
 	CUSTOMER: 'customer',
