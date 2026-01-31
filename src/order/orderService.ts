@@ -16,7 +16,8 @@ import logger from '../config/logger';
 import { IItem, IAmount, IOrder } from './orderTypes';
 import mongoose from 'mongoose';
 import { IdempotencyModel } from '../idempotency/idempotencyModel';
-import { PatymetOptions, PaymentGateway } from '../payment/payment-types';
+import { PatymetOptions } from '../payment/payment-types';
+import { createPaymentGateway } from '../factory/paymentGatewayFactory';
 
 export class OrderService {
 	private readonly TAX_RATE = 0.07; // 7% tax
@@ -25,13 +26,11 @@ export class OrderService {
 	constructor(
 		private readonly model: typeof customerModel,
 		private readonly productCacheModel: typeof ProductCacheModel,
-		private readonly toppingCacheModel: typeof toppingCaheModel,
-		private readonly paymentGateway: PaymentGateway
+		private readonly toppingCacheModel: typeof toppingCaheModel
 	) {
 		this.model = model;
 		this.productCacheModel = productCacheModel;
 		this.toppingCacheModel = toppingCacheModel;
-		this.paymentGateway = paymentGateway;
 	}
 
 	async createOrder(
@@ -76,6 +75,7 @@ export class OrderService {
 
 				savedOrder = await newOrder.save({ session });
 				if (orderData.paymentMode === PaymentMode.CARD) {
+					const paymentGateway = createPaymentGateway();
 					const paymentOptions: PatymetOptions = {
 						customerEmail: customer.email,
 						amount: newOrder.amounts.grandTotal,
@@ -85,9 +85,9 @@ export class OrderService {
 						currency: 'inr',
 					};
 					const paymentSession =
-						await this.paymentGateway.createSession(paymentOptions);
+						await paymentGateway.createSession(paymentOptions);
 					logger.info('Payment session created successfully');
-					await this.paymentGateway.getSession(paymentSession.id);
+					await paymentGateway.getSession(paymentSession.id);
 					logger.info('Payment session fetched successfully');
 					paymentUrl = paymentSession.paymentUrl;
 				}
