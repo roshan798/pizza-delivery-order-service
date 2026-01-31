@@ -12,6 +12,7 @@ import { Config } from './config';
 import logger from './config/logger';
 import customerRouter from './customer/customer-router';
 import orderRouter from './order/orderRouter';
+import paymentRouter from './payment/paymentRouter';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use(cookieParser());
 
 app.use('/customer', customerRouter);
 app.use('/orders', orderRouter);
+app.use('/payments', paymentRouter);
 
 // globlal error handler
 

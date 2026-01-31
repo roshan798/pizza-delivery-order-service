@@ -1,5 +1,5 @@
 import { Document, ObjectId } from 'mongoose';
-import { PaymentMode, OrderStatus } from './orderModel';
+import { PaymentMode, OrderStatus, PaymentStatus } from './orderModel';
 
 // 1. Amount Sub-Schema Type
 export interface IAmount {
@@ -32,6 +32,7 @@ export interface IOrder extends Document {
 	address: string;
 	phone: string;
 	paymentMode: PaymentMode;
+	paymentStatus: PaymentStatus;
 	couponCode?: string;
 	amounts: IAmount;
 	items: IItem[];

@@ -4,11 +4,14 @@ import {
 	PaymentGateway,
 	PaymentSession,
 	VerifiedSession,
-	PaymentStatus,
 } from './payment-types';
 import { Stripe } from 'stripe';
 import logger from '../config/logger';
 import createHttpError from 'http-errors';
+import {
+	PaymentStatus as OrderPaymentStatus,
+	PaymentStatus,
+} from '../order/orderModel';
 export class StripeGateway implements PaymentGateway {
 	private readonly stripe: Stripe;
 	constructor() {
@@ -57,7 +60,7 @@ export class StripeGateway implements PaymentGateway {
 			return {
 				id: session.id,
 				paymentUrl: session.url as string,
-				paymentStatus: 'unpaid',
+				paymentStatus: PaymentStatus.UNPAID,
 			};
 		} catch (error) {
 			if (error instanceof Error) {
@@ -80,10 +83,10 @@ export class StripeGateway implements PaymentGateway {
 	async getSession(id: string): Promise<VerifiedSession> {
 		const session = await this.stripe.checkout.sessions.retrieve(id);
 
-		let paymentStatus: PaymentStatus;
+		let paymentStatus: OrderPaymentStatus;
 		if (session.payment_status === 'paid') {
 			logger.info(`Stripe session ID: ${id} is paid.`);
-			paymentStatus = 'paid';
+			paymentStatus = OrderPaymentStatus.PAID;
 		} else if (
 			session.status === 'open' ||
 			(session.status === 'complete' &&
@@ -92,12 +95,12 @@ export class StripeGateway implements PaymentGateway {
 			logger.info(
 				`Stripe session ID: ${id} is open or complete but unpaid.`
 			);
-			paymentStatus = 'unpaid';
+			paymentStatus = OrderPaymentStatus.UNPAID;
 		} else {
 			logger.warn(
 				`Stripe session ID: ${id} has an unexpected status: ${session.status} and payment_status: ${session.payment_status}. Defaulting to unpaid.`
 			);
-			paymentStatus = 'unpaid';
+			paymentStatus = OrderPaymentStatus.UNPAID;
 		}
 
 		// Ensure metadata is present and correctly typed

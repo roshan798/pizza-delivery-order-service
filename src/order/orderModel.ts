@@ -2,10 +2,17 @@
 import mongoose, { Model } from 'mongoose';
 import { IOrder } from './orderTypes';
 
+export enum PaymentStatus {
+	PAID = 'PAID',
+	UNPAID = 'UNPAID',
+	NO_PAYMENT_REQUIRED = 'NO_PAYMENT_REQUIRED',
+}
+
 export enum PaymentMode {
 	CASH = 'CASH',
 	CARD = 'CARD',
 }
+
 export enum OrderStatus {
 	PENDING = 'pending',
 	VERIFIED = 'verified',
@@ -50,6 +57,16 @@ const orderSchema = new mongoose.Schema<IOrder>(
 			type: String,
 			required: true,
 			enum: [PaymentMode.CASH, PaymentMode.CARD],
+		},
+		paymentStatus: {
+			type: String,
+			required: true,
+			default: PaymentStatus.UNPAID,
+			enum: [
+				PaymentStatus.PAID,
+				PaymentStatus.UNPAID,
+				PaymentStatus.NO_PAYMENT_REQUIRED,
+			],
 		},
 		couponCode: String,
 		amounts: {

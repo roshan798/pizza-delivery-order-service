@@ -1,4 +1,5 @@
-export type PaymentStatus = 'no_payment_required' | 'paid' | 'unpaid';
+import { PaymentStatus } from '../order/orderModel';
+
 export interface PatymetOptions {
 	currency?: 'inr';
 	customerEmail: string;
