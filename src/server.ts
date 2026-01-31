@@ -11,6 +11,7 @@ const startServer = async () => {
 	let messageBroker = null;
 	try {
 		messageBroker = messageBrokerFactory('order-service', Config.BROKERS);
+		await messageBroker.connectProducer();
 		await messageBroker.connectConsumer();
 		await messageBroker.consumeMessages(['product', 'topping']);
 

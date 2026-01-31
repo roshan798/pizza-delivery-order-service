@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import logger from '../config/logger';
 import orderModel from '../order/orderModel';
-import { createPaymentGateway } from '../factory/paymentGatewayFactory';
+import { createPaymentGateway } from '../common/factories/paymentGatewayFactory';
+import { MessageBroker } from '../common/MessageBroker';
 interface WebhookBody {
 	type: string;
 	data: {
@@ -13,6 +14,9 @@ interface WebhookBody {
 }
 
 export class PaymentController {
+	constructor(private readonly messageBroker: MessageBroker) {
+		this.messageBroker = messageBroker;
+	}
 	handleWebhook = async (req: Request, res: Response) => {
 		const webhookBody = req.body as WebhookBody;
 		if (webhookBody.type === 'checkout.session.completed') {
@@ -30,8 +34,12 @@ export class PaymentController {
 				logger.debug(
 					'order updated : ' + JSON.stringify(updated_order)
 				);
-				// TODO
-				// const kafka = createMessa
+				// TODO: What happens ehen it fails
+				await this.messageBroker.sendMessage(
+					'order',
+					JSON.stringify(updated_order)
+				);
+
 				// send update to KAFKA broker
 				res.json({ success: true });
 			} catch (err) {

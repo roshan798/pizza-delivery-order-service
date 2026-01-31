@@ -8,11 +8,15 @@ import ProductCacheModel from '../Cache/Product/ProductCacheModel';
 import toppingCaheModel from '../Cache/topping/toppingCaheModel';
 import canAccess from '../common/middlewares/canAccess';
 import { Roles } from '../types';
+import { messageBrokerFactory } from '../common/factories/messageBroker';
+import { Config } from '../config';
 const router = express.Router();
+const messageBroker = messageBrokerFactory('order-service', Config.BROKERS);
 const orderService = new OrderService(
 	customerModel,
 	ProductCacheModel,
-	toppingCaheModel
+	toppingCaheModel,
+	messageBroker
 );
 const orderController = new OrderController(orderService);
 router.post(

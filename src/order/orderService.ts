@@ -6,7 +6,11 @@ import toppingCaheModel, {
 	IToppingCache,
 } from '../Cache/topping/toppingCaheModel';
 import customerModel from '../customer/customer-model';
-import OrderModel, { OrderStatus, PaymentMode } from './orderModel';
+import OrderModel, {
+	OrderStatus,
+	PaymentMode,
+	PaymentStatus,
+} from './orderModel';
 import type {
 	Order,
 	OrderItemRequest,
@@ -17,7 +21,8 @@ import { IItem, IAmount, IOrder } from './orderTypes';
 import mongoose from 'mongoose';
 import { IdempotencyModel } from '../idempotency/idempotencyModel';
 import { PatymetOptions } from '../payment/payment-types';
-import { createPaymentGateway } from '../factory/paymentGatewayFactory';
+import { createPaymentGateway } from '../common/factories/paymentGatewayFactory';
+import { MessageBroker } from '../common/MessageBroker';
 
 export class OrderService {
 	private readonly TAX_RATE = 0.07; // 7% tax
@@ -26,11 +31,13 @@ export class OrderService {
 	constructor(
 		private readonly model: typeof customerModel,
 		private readonly productCacheModel: typeof ProductCacheModel,
-		private readonly toppingCacheModel: typeof toppingCaheModel
+		private readonly toppingCacheModel: typeof toppingCaheModel,
+		private readonly messageBroker: MessageBroker
 	) {
 		this.model = model;
 		this.productCacheModel = productCacheModel;
 		this.toppingCacheModel = toppingCacheModel;
+		this.messageBroker = messageBroker;
 	}
 
 	async createOrder(
@@ -66,6 +73,7 @@ export class OrderService {
 					address: orderData.address,
 					phone: orderData.phone,
 					paymentMode: orderData.paymentMode,
+					paymentStatus: PaymentStatus.PENDING,
 					couponCode: orderData.couponCode,
 					items: finalizedItems,
 					amounts: amounts,
@@ -97,6 +105,10 @@ export class OrderService {
 					data: savedOrder,
 				});
 				await idempotencyRecord.save({ session });
+				await this.messageBroker.sendMessage(
+					'order',
+					JSON.stringify(savedOrder)
+				);
 
 				await session.commitTransaction();
 				logger.info('Transaction committed', idempotencyKey);

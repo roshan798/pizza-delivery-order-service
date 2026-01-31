@@ -6,6 +6,7 @@ export enum PaymentStatus {
 	PAID = 'PAID',
 	UNPAID = 'UNPAID',
 	NO_PAYMENT_REQUIRED = 'NO_PAYMENT_REQUIRED',
+	PENDING = 'PENDING',
 }
 
 export enum PaymentMode {
