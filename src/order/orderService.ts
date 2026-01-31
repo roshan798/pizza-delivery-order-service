@@ -6,7 +6,7 @@ import toppingCaheModel, {
 	IToppingCache,
 } from '../Cache/topping/toppingCaheModel';
 import customerModel from '../customer/customer-model';
-import OrderModel, { OrderStatus } from './orderModel';
+import OrderModel, { OrderStatus, PaymentMode } from './orderModel';
 import type {
 	Order,
 	OrderItemRequest,
@@ -38,7 +38,7 @@ export class OrderService {
 		orderData: Order,
 		userEmail: string,
 		idempotencyKey: string
-	): Promise<string> {
+	): Promise<string | null> {
 		try {
 			logger.info(`Attempting to create order for user: ${userEmail}`);
 
@@ -75,21 +75,23 @@ export class OrderService {
 				});
 
 				savedOrder = await newOrder.save({ session });
-				const paymentOptions: PatymetOptions = {
-					customerEmail: customer.email,
-					amount: newOrder.amounts.grandTotal,
-					idempotantKey: idempotencyKey,
-					orderId: newOrder._id.toString(),
-					tenantId: newOrder.tenantId!,
-					currency: 'inr',
-				};
+				if (orderData.paymentMode === PaymentMode.CARD) {
+					const paymentOptions: PatymetOptions = {
+						customerEmail: customer.email,
+						amount: newOrder.amounts.grandTotal,
+						idempotantKey: idempotencyKey,
+						orderId: newOrder._id.toString(),
+						tenantId: newOrder.tenantId!,
+						currency: 'inr',
+					};
+					const paymentSession =
+						await this.paymentGateway.createSession(paymentOptions);
+					logger.info('Payment session created successfully');
+					await this.paymentGateway.getSession(paymentSession.id);
+					logger.info('Payment session fetched successfully');
+					paymentUrl = paymentSession.paymentUrl;
+				}
 
-				const paymentSession =
-					await this.paymentGateway.createSession(paymentOptions);
-				logger.info('Payment session created successfully');
-				await this.paymentGateway.getSession(paymentSession.id);
-				logger.info('Payment session fetched successfully');
-				paymentUrl = paymentSession.paymentUrl;
 				const idempotencyRecord = new IdempotencyModel({
 					key: idempotencyKey,
 					data: savedOrder,

@@ -42,8 +42,8 @@ export class StripeGateway implements PaymentGateway {
 						orderId: options.orderId,
 						tenantId: options.tenantId,
 					} as Record<string, string>,
-					success_url: `${Config.APPLICATION_URL}/payment?success=true&order_id=${options.orderId}`,
-					cancel_url: `${Config.APPLICATION_URL}/payment?success=false&order_id=${options.orderId}`,
+					success_url: `${Config.APPLICATION_URL}/payment?success=true&order_id=${options.orderId}&}`,
+					cancel_url: `${Config.APPLICATION_URL}/payment/cancel?order_id=${options.orderId}`,
 				},
 				{
 					idempotencyKey: options.idempotantKey,
