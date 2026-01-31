@@ -16,6 +16,7 @@ import logger from '../config/logger';
 import { IItem, IAmount, IOrder } from './orderTypes';
 import mongoose from 'mongoose';
 import { IdempotencyModel } from '../idempotency/idempotencyModel';
+import { PatymetOptions, PaymentGateway } from '../payment/payment-types';
 
 export class OrderService {
 	private readonly TAX_RATE = 0.07; // 7% tax
@@ -24,18 +25,20 @@ export class OrderService {
 	constructor(
 		private readonly model: typeof customerModel,
 		private readonly productCacheModel: typeof ProductCacheModel,
-		private readonly toppingCacheModel: typeof toppingCaheModel
+		private readonly toppingCacheModel: typeof toppingCaheModel,
+		private readonly paymentGateway: PaymentGateway
 	) {
 		this.model = model;
 		this.productCacheModel = productCacheModel;
 		this.toppingCacheModel = toppingCacheModel;
+		this.paymentGateway = paymentGateway;
 	}
 
 	async createOrder(
 		orderData: Order,
 		userEmail: string,
 		idempotencyKey: string
-	): Promise<IOrder> {
+	): Promise<string> {
 		try {
 			logger.info(`Attempting to create order for user: ${userEmail}`);
 
@@ -52,6 +55,7 @@ export class OrderService {
 			);
 
 			let savedOrder: IOrder | null = null;
+			let paymentUrl = null;
 			const session = await mongoose.startSession();
 
 			try {
@@ -70,8 +74,22 @@ export class OrderService {
 					orderStatus: OrderStatus.PENDING,
 				});
 
-				savedOrder = await newOrder.save({ session }); // ✅ FIXED: await + session
+				savedOrder = await newOrder.save({ session });
+				const paymentOptions: PatymetOptions = {
+					customerEmail: customer.email,
+					amount: newOrder.amounts.grandTotal,
+					idempotantKey: idempotencyKey,
+					orderId: newOrder._id.toString(),
+					tenantId: newOrder.tenantId!,
+					currency: 'inr',
+				};
 
+				const paymentSession =
+					await this.paymentGateway.createSession(paymentOptions);
+				logger.info('Payment session created successfully');
+				await this.paymentGateway.getSession(paymentSession.id);
+				logger.info('Payment session fetched successfully');
+				paymentUrl = paymentSession.paymentUrl;
 				const idempotencyRecord = new IdempotencyModel({
 					key: idempotencyKey,
 					data: savedOrder,
@@ -96,7 +114,7 @@ export class OrderService {
 			logger.info(
 				`Order created successfully with ID: ${savedOrder._id.toString()} for user: ${userEmail}`
 			);
-			return savedOrder;
+			return paymentUrl;
 		} catch (error) {
 			logger.error(`Failed to create order for user ${userEmail}`, error);
 			throw error;

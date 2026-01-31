@@ -35,15 +35,13 @@ export class OrderController {
 		}
 		const orderData: Order = req.body;
 		const userEmail = req.auth.email;
-		const newOrder = await this.service.createOrder(
+		const redirectUrl = await this.service.createOrder(
 			orderData,
 			userEmail,
 			idompotencyKey
 		);
-		logger.info(
-			`Order created successfully with ID: ${newOrder._id.toString()}`
-		);
-		res.json({ message: 'Order created successfully!', newOrder });
+
+		res.json({ paymentUrl: redirectUrl });
 		return;
 	};
 }

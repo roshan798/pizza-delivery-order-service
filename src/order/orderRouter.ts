@@ -8,11 +8,14 @@ import ProductCacheModel from '../Cache/Product/ProductCacheModel';
 import toppingCaheModel from '../Cache/topping/toppingCaheModel';
 import canAccess from '../common/middlewares/canAccess';
 import { Roles } from '../types';
+import { StripeGateway } from '../payment/stripe';
 const router = express.Router();
+const paymentGateway = new StripeGateway();
 const orderService = new OrderService(
 	customerModel,
 	ProductCacheModel,
-	toppingCaheModel
+	toppingCaheModel,
+	paymentGateway
 );
 const orderController = new OrderController(orderService);
 router.post(

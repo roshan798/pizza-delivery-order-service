@@ -6,10 +6,12 @@ export const Config = {
 	URL: `http://${config.get<string>('server.host')}:${config.get<number>('server.port')}`,
 	NODE_ENV: config.get<string>('NODE_ENV'),
 	CLIENT_URLS: config.get<string>('client.urls').split(','),
+	APPLICATION_URL: config.get<string>('client.application.url'),
 	DB_URL: config.get<string>('database.url'),
 	DB_NAME: config.get<string>('database.name'),
 	DB_USER: config.get<string>('database.user'),
 	DB_PASSWORD: config.get<string>('database.password'),
 	AUTH_JWKS_URI: config.get<string>('auth.jwksUri'),
 	BROKERS: config.get<string>('kafka.brokers').split(','),
+	STRIPE_SECRET_KEY: config.get<string>('stripe.secret_key'),
 };
