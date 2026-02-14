@@ -25,4 +25,13 @@ router.post(
 	canAccess([Roles.CUSTOMER]),
 	asyncRequestHandler(orderController.create)
 );
+
+router.get('/:id', authenticate, asyncRequestHandler(orderController.getById));
+
+router.get(
+	'/',
+	authenticate,
+	asyncRequestHandler(orderController.getAllByCustomer)
+);
+
 export default router;

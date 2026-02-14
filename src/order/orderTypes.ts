@@ -1,5 +1,6 @@
-import { Document, ObjectId } from 'mongoose';
+import { Document } from 'mongoose';
 import { PaymentMode, OrderStatus, PaymentStatus } from './orderModel';
+import { AuthRequest } from '../types';
 
 // 1. Amount Sub-Schema Type
 export interface IAmount {
@@ -28,7 +29,7 @@ export interface IItem {
 
 // 3. Main Order Document Interface
 export interface IOrder extends Document {
-	customerId: ObjectId;
+	customerId: string;
 	address: string;
 	phone: string;
 	paymentMode: PaymentMode;
@@ -45,3 +46,9 @@ export interface IOrder extends Document {
 	createdAt: Date;
 	updatedAt: Date;
 }
+
+export type GetOrderByIDAuthRequest = AuthRequest & {
+	params: {
+		id: string;
+	};
+};

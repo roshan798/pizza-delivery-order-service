@@ -67,6 +67,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
 				PaymentStatus.PAID,
 				PaymentStatus.UNPAID,
 				PaymentStatus.NO_PAYMENT_REQUIRED,
+				PaymentStatus.PENDING,
 			],
 		},
 		couponCode: String,

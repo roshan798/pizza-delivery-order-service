@@ -135,6 +135,53 @@ export class OrderService {
 		}
 	}
 
+	async getOrderById(id: string): Promise<IOrder | null> {
+		logger.info(`Attempting to retrieve order with ID: ${id}.`);
+
+		const order = await OrderModel.findById(id);
+
+		if (!order) {
+			logger.warn(`Order with ID: ${id} not found.`);
+			return null;
+		}
+
+		logger.info(`Successfully retrieved order with ID: ${id}`);
+		return order;
+	}
+
+	async getOrdersByCustomerEmail(email: string): Promise<IOrder[] | null> {
+		logger.info(
+			`Attempting to retrieve orders for customer email: ${email}.`
+		);
+		const customer = await customerModel.findOne({ email });
+
+		if (!customer) {
+			logger.warn(`Customer with email: ${email} not found.`);
+			return null;
+		}
+
+		const customerId = customer._id;
+		logger.debug(
+			`Found customer ID: ${customerId.toString()} for email: ${email}.`
+		);
+
+		const orders = await OrderModel.find({
+			customerId: customerId.toString(),
+		});
+
+		if (!orders || orders.length === 0) {
+			logger.warn(
+				`No orders found for customer ID: ${customerId.toString()}.`
+			);
+			return null;
+		}
+
+		logger.info(
+			`Successfully retrieved ${orders.length} orders for customer ID: ${customerId.toString()}.`
+		);
+		return orders;
+	}
+
 	private async calculateTotal(items: OrderItemRequest[]): Promise<IItem[]> {
 		logger.debug(`Entering calculateTotal with ${items.length} items.`);
 		const finalizedItems: IItem[] = [];
