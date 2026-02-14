@@ -16,7 +16,7 @@ export class OrderResponseDto {
 	createdAt: Date;
 	updatedAt: Date;
 
-	constructor(order: IOrder) {
+	constructor(order: IOrder, items: boolean = true) {
 		this.id = order._id.toString();
 		this.customerId = order.customerId;
 		this.address = order.address;
@@ -25,10 +25,15 @@ export class OrderResponseDto {
 		this.paymentStatus = order.paymentStatus;
 		this.couponCode = order.couponCode;
 		this.amounts = order.amounts;
-		this.items = order.items;
 		this.orderStatus = order.orderStatus;
 		this.tenantId = order.tenantId!;
 		this.createdAt = order.createdAt;
 		this.updatedAt = order.updatedAt;
+		if (items) {
+			this.items = order.items;
+		}
+		else {
+			this.items = [];
+		}
 	}
 }
