@@ -43,6 +43,7 @@ const itemSchema = new mongoose.Schema({
 	toppings: [
 		{
 			id: String,
+			name: String,
 			price: Number,
 		},
 	],

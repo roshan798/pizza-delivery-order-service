@@ -12,7 +12,7 @@ export interface IToppingCache extends Document {
 const toppingSchema = new mongoose.Schema<IToppingCache>(
 	{
 		toppingId: { type: String, required: true },
-		name: { type: String, required: true }, // Added 'name' field to schema for consistency with IToppingCache
+		name: { type: String, required: true },
 		price: { type: Number, required: true },
 		tenantId: { type: String, required: true },
 	},

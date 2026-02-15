@@ -23,6 +23,9 @@ import { IdempotencyModel } from '../idempotency/idempotencyModel';
 import { PatymetOptions } from '../payment/payment-types';
 import { createPaymentGateway } from '../common/factories/paymentGatewayFactory';
 import { MessageBroker } from '../common/MessageBroker';
+import { QueryFilter } from 'mongoose';
+import { Roles } from '../types';
+import createHttpError from 'http-errors';
 
 export class OrderService {
 	private readonly TAX_RATE = 0.07; // 7% tax
@@ -135,6 +138,51 @@ export class OrderService {
 		}
 	}
 
+	async getOrders(
+		filters: QueryFilter<IOrder>,
+		page: number,
+		limit: number
+	): Promise<{ orders: IOrder[]; total: number }> {
+		logger.info(
+			`Attempting to retrieve orders with filters: ${JSON.stringify(
+				filters
+			)}, page: ${page}, limit: ${limit}.`
+		);
+
+		const query: QueryFilter<IOrder> = {};
+
+		if (filters.paymentStatus) {
+			query.paymentStatus = filters.paymentStatus;
+		}
+		if (filters.orderStatus) {
+			query.orderStatus = filters.orderStatus;
+		}
+		if (filters['items.productName']) {
+			query['items.productName'] = filters['items.productName'];
+		}
+		if (filters.tenantId) {
+			query.tenantId = filters.tenantId;
+		}
+
+		const skip = (page - 1) * limit;
+
+		const [orders, total] = await Promise.all([
+			OrderModel.find(query)
+				.skip(skip)
+				.limit(limit)
+				.sort({ createdAt: -1 })
+				.exec(),
+			OrderModel.countDocuments(query),
+		]);
+
+		logger.info(
+			`Successfully retrieved ${orders.length} orders (total: ${total}) with filters: ${JSON.stringify(
+				filters
+			)}.`
+		);
+		return { orders, total };
+	}
+
 	async getOrderById(id: string): Promise<IOrder | null> {
 		logger.info(`Attempting to retrieve order with ID: ${id}.`);
 
@@ -146,6 +194,128 @@ export class OrderService {
 		}
 
 		logger.info(`Successfully retrieved order with ID: ${id}`);
+		return order;
+	}
+
+	async updateOrderStatus(
+		orderId: string,
+		newStatus: OrderStatus,
+		userRole: string,
+		authTenantId?: string
+	): Promise<IOrder | null> {
+		logger.info(
+			`Attempting to update order ${orderId} to status ${newStatus} by role ${userRole.toString()}`
+		);
+
+		const order = await OrderModel.findById(orderId);
+
+		if (!order) {
+			logger.warn(`Order with ID: ${orderId} not found.`);
+			return null;
+		}
+
+		// Authorization check
+		if (
+			userRole === Roles.MANAGER.toString() &&
+			order.tenantId !== authTenantId
+		) {
+			logger.warn(
+				`Manager ${authTenantId} unauthorized to update order ${orderId} of tenant ${order.tenantId}`
+			);
+			throw createHttpError(403, 'Unauthorized to update this order');
+		}
+
+		// Status transition logic (simplified for example)
+		const validTransitions: Record<OrderStatus, OrderStatus[]> = {
+			[OrderStatus.PENDING]: [
+				OrderStatus.VERIFIED,
+				OrderStatus.CANCELLED,
+			],
+			[OrderStatus.VERIFIED]: [
+				OrderStatus.CONFIRMED,
+				OrderStatus.CANCELLED,
+			],
+			[OrderStatus.CONFIRMED]: [
+				OrderStatus.PREPARING,
+				OrderStatus.CANCELLED,
+			],
+			[OrderStatus.PREPARING]: [
+				OrderStatus.OUT_FOR_DELIVERY,
+				OrderStatus.CANCELLED,
+			],
+			[OrderStatus.OUT_FOR_DELIVERY]: [
+				OrderStatus.DELIVERED,
+				OrderStatus.CANCELLED,
+			],
+			[OrderStatus.DELIVERED]: [], // Cannot change after delivered
+			[OrderStatus.CANCELLED]: [], // Cannot change after cancelled
+		};
+
+		if (userRole === Roles.ADMIN.toString()) {
+			// Admin can force any status change, but let's add some basic sanity
+			if (
+				order.orderStatus === OrderStatus.DELIVERED ||
+				order.orderStatus === OrderStatus.CANCELLED
+			) {
+				if (newStatus !== order.orderStatus) {
+					throw createHttpError(
+						400,
+						`Cannot change status of a ${order.orderStatus} order.`
+					);
+				}
+			}
+		} else if (!validTransitions[order.orderStatus]?.includes(newStatus)) {
+			throw createHttpError(
+				400,
+				`Invalid status transition from ${order.orderStatus} to ${newStatus}`
+			);
+		}
+
+		order.orderStatus = newStatus;
+		await order.save();
+
+		logger.info(`Order ${orderId} status updated to ${newStatus}`);
+		return order;
+	}
+
+	async cancelOrder(
+		orderId: string,
+		userRole: string,
+		authTenantId?: string
+	): Promise<IOrder | null> {
+		logger.info(
+			`Attempting to cancel order ${orderId} by role ${userRole.toString()}`
+		);
+
+		const order = await OrderModel.findById(orderId);
+
+		if (!order) {
+			logger.warn(`Order with ID: ${orderId} not found.`);
+			return null;
+		}
+
+		// Authorization check
+		if (userRole === Roles.MANAGER && order.tenantId !== authTenantId) {
+			logger.warn(
+				`Manager ${authTenantId} unauthorized to cancel order ${orderId} of tenant ${order.tenantId}`
+			);
+			throw createHttpError(403, 'Unauthorized to cancel this order');
+		}
+
+		if (
+			order.orderStatus === OrderStatus.CANCELLED ||
+			order.orderStatus === OrderStatus.DELIVERED
+		) {
+			throw createHttpError(
+				400,
+				`Order cannot be cancelled as it is already ${order.orderStatus}`
+			);
+		}
+
+		order.orderStatus = OrderStatus.CANCELLED;
+		await order.save();
+
+		logger.info(`Order ${orderId} cancelled successfully.`);
 		return order;
 	}
 
@@ -298,6 +468,7 @@ export class OrderService {
 		logger.debug(`Found cached topping: ${JSON.stringify(cachedTopping)}`);
 		const populatedTopping = {
 			id: cachedTopping.toppingId,
+			name: cachedTopping.name,
 			price: cachedTopping.price,
 		};
 		return populatedTopping;
@@ -358,6 +529,7 @@ export class OrderService {
 	private _getPopulatedToppingsAndSum(
 		requestedToppings: ToppingRequest[],
 		toppingsCache: IToppingCache[],
+		// eslint-disable-next-line no-unused-vars
 		sumCallback: (price: number) => void
 	): IItem['toppings'] {
 		return requestedToppings.map((topping) => {

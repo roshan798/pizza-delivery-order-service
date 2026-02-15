@@ -26,12 +26,26 @@ router.post(
 	asyncRequestHandler(orderController.create)
 );
 
-router.get('/:id', authenticate, asyncRequestHandler(orderController.getById));
-
 router.get(
 	'/',
 	authenticate,
+	canAccess([Roles.MANAGER, Roles.ADMIN]),
+	asyncRequestHandler(orderController.getAll)
+);
+
+router.get(
+	'/getMine',
+	authenticate,
 	asyncRequestHandler(orderController.getAllByCustomer)
+);
+
+router.get('/:id', authenticate, asyncRequestHandler(orderController.getById));
+
+router.patch(
+	'/:id',
+	authenticate,
+	canAccess([Roles.MANAGER, Roles.ADMIN]),
+	asyncRequestHandler(orderController.updateOrderStatus)
 );
 
 export default router;

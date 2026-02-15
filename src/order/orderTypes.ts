@@ -22,9 +22,10 @@ export interface IItem {
 	};
 	toppings: Array<{
 		id: string;
+		name: string;
 		price: number;
 	}>;
-	itemTotal: number; // sum of base price and toppings price
+	itemTotal: number;
 }
 
 // 3. Main Order Document Interface
@@ -48,6 +49,15 @@ export interface IOrder extends Document {
 }
 
 export type GetOrderByIDAuthRequest = AuthRequest & {
+	params: {
+		id: string;
+	};
+};
+
+export type UpdateOrderByIdRequest = AuthRequest & {
+	body: {
+		status: OrderStatus;
+	};
 	params: {
 		id: string;
 	};

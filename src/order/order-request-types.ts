@@ -38,3 +38,17 @@ export interface ToppingRequest {
 	name: string;
 	price: number;
 }
+
+// New interfaces for getAll orders
+export interface GetAllOrdersQuery {
+	paymentStatus?: string;
+	orderStatus?: string;
+	query?: string; // For searching product names within items
+	page?: string; // Will be parsed to number
+	limit?: string; // Will be parsed to number
+	[key: string]: string | string[] | undefined;
+}
+
+export interface GetAllOrdersAuthRequest extends AuthRequest {
+	query: GetAllOrdersQuery;
+}
