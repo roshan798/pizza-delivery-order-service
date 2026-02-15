@@ -3,6 +3,7 @@ import logger from '../config/logger';
 import orderModel from '../order/orderModel';
 import { createPaymentGateway } from '../common/factories/paymentGatewayFactory';
 import { MessageBroker } from '../common/MessageBroker';
+import { buildMessage, OrderEvents, Topics } from '../utils/eventUtils';
 interface WebhookBody {
 	type: string;
 	data: {
@@ -35,12 +36,12 @@ export class PaymentController {
 					'order updated : ' + JSON.stringify(updated_order)
 				);
 				// TODO: What happens ehen it fails
-				await this.messageBroker.sendMessage(
-					'order',
-					JSON.stringify(updated_order)
+				const msg = buildMessage(
+					OrderEvents.ORDER_PAYMENT_STATUS_UPDATE,
+					updated_order
 				);
+				await this.messageBroker.sendMessage(Topics.ORDER, msg);
 
-				// send update to KAFKA broker
 				res.json({ success: true });
 			} catch (err) {
 				if (err instanceof Error) {

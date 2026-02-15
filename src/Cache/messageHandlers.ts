@@ -1,4 +1,5 @@
 import logger from '../config/logger';
+import { EventMessage } from '../utils/eventUtils';
 import productCacheModel, { ProductMessage } from './Product/ProductCacheModel';
 import toppingCacheModel, { ToppingMessage } from './topping/toppingCaheModel';
 
@@ -14,11 +15,10 @@ async function consumeProductMessageHandler(
 	});
 	try {
 		if (messageValue) {
-			const productMessage = (await JSON.parse(
+			const { data: productMessage, event_type } = (await JSON.parse(
 				messageValue
-			)) as ProductMessage;
-			logger.info('Parsed Product Message:', productMessage); // Log the parsed product message
-
+			)) as EventMessage<ProductMessage>;
+			logger.info('Parsed Product Message:', productMessage, event_type);
 			await productCacheModel.updateOne(
 				{
 					productId: productMessage.productId,
@@ -59,10 +59,10 @@ async function consumeToppingMessageHandler(
 	});
 	try {
 		if (messageValue) {
-			const toppingMessage = (await JSON.parse(
+			const { data: toppingMessage, event_type } = (await JSON.parse(
 				messageValue
-			)) as ToppingMessage;
-			logger.info('Parsed Topping Message:', toppingMessage);
+			)) as EventMessage<ToppingMessage>;
+			logger.info('Parsed Topping Message:', toppingMessage, event_type);
 			await toppingCacheModel.updateOne(
 				{
 					toppingId: toppingMessage.toppingId,

@@ -3,6 +3,7 @@ import logger from './config/logger';
 import initDB from './config/db';
 import { Config } from './config';
 import { messageBrokerFactory } from './common/factories/messageBroker';
+import { Topics } from './utils/eventUtils';
 
 const startServer = async () => {
 	const port = Config.PORT;
@@ -13,7 +14,7 @@ const startServer = async () => {
 		messageBroker = messageBrokerFactory('order-service', Config.BROKERS);
 		await messageBroker.connectProducer();
 		await messageBroker.connectConsumer();
-		await messageBroker.consumeMessages(['product', 'topping']);
+		await messageBroker.consumeMessages([Topics.PRODUCT, Topics.TOPPING]);
 
 		app.listen(port, () => {
 			logger.info(`Server is running on ${port}`);

@@ -26,6 +26,7 @@ import { MessageBroker } from '../common/MessageBroker';
 import { QueryFilter } from 'mongoose';
 import { Roles } from '../types';
 import createHttpError from 'http-errors';
+import { buildMessage, OrderEvents, Topics } from '../utils/eventUtils';
 
 export class OrderService {
 	private readonly TAX_RATE = 0.07; // 7% tax
@@ -108,10 +109,8 @@ export class OrderService {
 					data: savedOrder,
 				});
 				await idempotencyRecord.save({ session });
-				await this.messageBroker.sendMessage(
-					'order',
-					JSON.stringify(savedOrder)
-				);
+				const msg = buildMessage(OrderEvents.ORDER_CREATE, savedOrder);
+				await this.messageBroker.sendMessage(Topics.ORDER, msg);
 
 				await session.commitTransaction();
 				logger.info('Transaction committed', idempotencyKey);

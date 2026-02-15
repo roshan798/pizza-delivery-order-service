@@ -5,6 +5,7 @@ import {
 	consumeToppingMessageHandler,
 } from '../Cache/messageHandlers';
 import logger from './logger';
+import { Topics } from '../utils/eventUtils';
 
 export class KafkaMessageBroker implements MessageBroker {
 	private producer: Producer;
@@ -48,14 +49,14 @@ export class KafkaMessageBroker implements MessageBroker {
 		await this.consumer.run({
 			eachMessage: async ({ topic, partition, message }) => {
 				switch (topic) {
-					case 'product':
+					case Topics.PRODUCT.toString():
 						await consumeProductMessageHandler(
 							topic,
 							partition,
 							message.value?.toString()
 						);
 						break;
-					case 'topping':
+					case Topics.TOPPING.toString():
 						await consumeToppingMessageHandler(
 							topic,
 							partition,
