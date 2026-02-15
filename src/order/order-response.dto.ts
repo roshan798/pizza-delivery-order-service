@@ -31,8 +31,7 @@ export class OrderResponseDto {
 		this.updatedAt = order.updatedAt;
 		if (items) {
 			this.items = order.items;
-		}
-		else {
+		} else {
 			this.items = [];
 		}
 	}
