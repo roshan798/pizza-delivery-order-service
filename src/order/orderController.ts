@@ -18,9 +18,16 @@ import { QueryFilter } from 'mongoose';
 import createHttpError from 'http-errors';
 import { OrderStatus } from './orderModel';
 import customerModel from '../customer/customer-model';
+import { buildMessage, OrderEvents, Topics } from '../utils/eventUtils';
+import { MessageBroker } from '../common/MessageBroker';
 export class OrderController {
-	constructor(private readonly service: OrderService) {
+	private readonly messageBroker: MessageBroker;
+	constructor(
+		private readonly service: OrderService,
+		messageBroker: MessageBroker
+	) {
 		this.service = service;
+		this.messageBroker = messageBroker;
 	}
 
 	create = async (_req: Request, res: Response) => {
@@ -49,13 +56,22 @@ export class OrderController {
 		}
 		const orderData: Order = req.body;
 		const userEmail = req.auth.email;
-		const redirectUrl = await this.service.createOrder(
+		const result = await this.service.createOrder(
 			orderData,
 			userEmail,
 			idompotencyKey
 		);
-
-		res.json({ paymentUrl: redirectUrl });
+		if (!result || !result.savedOrder) {
+			logger.error('Failed to create order');
+			res.status(500).json({ message: 'Failed to create order' });
+			return;
+		}
+		const msg = buildMessage(
+			OrderEvents.ORDER_CREATE,
+			new OrderResponseDto(result?.savedOrder)
+		);
+		await this.messageBroker.sendMessage(Topics.ORDER, msg);
+		res.json({ paymentUrl: result.paymentUrl });
 		return;
 	};
 
@@ -207,7 +223,10 @@ export class OrderController {
 		if (!updatedOrder) {
 			throw createHttpError(404, `Order not found!`);
 		}
-		res.json(new OrderResponseDto(updatedOrder));
+		const resDto = new OrderResponseDto(updatedOrder);
+		const msg = buildMessage(OrderEvents.ORDER_STATUS_UPDATE, resDto);
+		await this.messageBroker.sendMessage(Topics.ORDER, msg);
+		res.json(resDto);
 	};
 
 	// cancelOrder = async (_req: Request, res: Response) => {

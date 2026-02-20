@@ -22,11 +22,9 @@ import mongoose from 'mongoose';
 import { IdempotencyModel } from '../idempotency/idempotencyModel';
 import { PatymetOptions } from '../payment/payment-types';
 import { createPaymentGateway } from '../common/factories/paymentGatewayFactory';
-import { MessageBroker } from '../common/MessageBroker';
 import { QueryFilter } from 'mongoose';
 import { Roles } from '../types';
 import createHttpError from 'http-errors';
-import { buildMessage, OrderEvents, Topics } from '../utils/eventUtils';
 
 export class OrderService {
 	private readonly TAX_RATE = 0.07; // 7% tax
@@ -35,20 +33,21 @@ export class OrderService {
 	constructor(
 		private readonly model: typeof customerModel,
 		private readonly productCacheModel: typeof ProductCacheModel,
-		private readonly toppingCacheModel: typeof toppingCaheModel,
-		private readonly messageBroker: MessageBroker
+		private readonly toppingCacheModel: typeof toppingCaheModel
 	) {
 		this.model = model;
 		this.productCacheModel = productCacheModel;
 		this.toppingCacheModel = toppingCacheModel;
-		this.messageBroker = messageBroker;
 	}
 
 	async createOrder(
 		orderData: Order,
 		userEmail: string,
 		idempotencyKey: string
-	): Promise<string | null> {
+	): Promise<{
+		savedOrder: IOrder | null;
+		paymentUrl: string | null;
+	} | null> {
 		try {
 			logger.info(`Attempting to create order for user: ${userEmail}`);
 
@@ -109,8 +108,6 @@ export class OrderService {
 					data: savedOrder,
 				});
 				await idempotencyRecord.save({ session });
-				const msg = buildMessage(OrderEvents.ORDER_CREATE, savedOrder);
-				await this.messageBroker.sendMessage(Topics.ORDER, msg);
 
 				await session.commitTransaction();
 				logger.info('Transaction committed', idempotencyKey);
@@ -130,7 +127,7 @@ export class OrderService {
 			logger.info(
 				`Order created successfully with ID: ${savedOrder._id.toString()} for user: ${userEmail}`
 			);
-			return paymentUrl;
+			return { savedOrder, paymentUrl };
 		} catch (error) {
 			logger.error(`Failed to create order for user ${userEmail}`, error);
 			throw error;
@@ -167,6 +164,7 @@ export class OrderService {
 
 		const [orders, total] = await Promise.all([
 			OrderModel.find(query)
+				.sort({ updatedAt: -1 })
 				.skip(skip)
 				.limit(limit)
 				.sort({ createdAt: -1 })

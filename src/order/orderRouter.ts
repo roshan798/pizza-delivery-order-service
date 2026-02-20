@@ -15,10 +15,9 @@ const messageBroker = messageBrokerFactory('order-service', Config.BROKERS);
 const orderService = new OrderService(
 	customerModel,
 	ProductCacheModel,
-	toppingCaheModel,
-	messageBroker
+	toppingCaheModel
 );
-const orderController = new OrderController(orderService);
+const orderController = new OrderController(orderService, messageBroker);
 router.post(
 	'/',
 	authenticate,
