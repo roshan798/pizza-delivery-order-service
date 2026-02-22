@@ -15,6 +15,7 @@ export class OrderResponseDto {
 	tenantId: string;
 	createdAt: Date;
 	updatedAt: Date;
+	customerEmail: string;
 
 	constructor(order: IOrder, items: boolean = true) {
 		this.id = order._id.toString();
@@ -34,5 +35,9 @@ export class OrderResponseDto {
 		} else {
 			this.items = [];
 		}
+	}
+	setCustomerEmail(email: string) {
+		this.customerEmail = email;
+		return this;
 	}
 }

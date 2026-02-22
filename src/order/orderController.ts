@@ -68,7 +68,9 @@ export class OrderController {
 		}
 		const msg = buildMessage(
 			OrderEvents.ORDER_CREATE,
-			new OrderResponseDto(result?.savedOrder)
+			new OrderResponseDto(result?.savedOrder).setCustomerEmail(
+				userEmail || ''
+			)
 		);
 		await this.messageBroker.sendMessage(Topics.ORDER, msg);
 		res.json({ paymentUrl: result.paymentUrl });
@@ -100,8 +102,6 @@ export class OrderController {
 				throw createHttpError(404, 'Customer not found');
 			}
 
-			console.log(req.auth);
-			console.log(dbCustomerID, customer._id.toString());
 			if (dbCustomerID !== customer._id.toString()) {
 				logger.warn(`Unauthorized access for role: ${role}`);
 				res.status(403).json({ message: 'Unauthorized' });
@@ -209,6 +209,7 @@ export class OrderController {
 		const id = req.params.id;
 		const { orderStatus } = req.body as { orderStatus: OrderStatus };
 		const role = req.auth.role;
+		const email = req.auth.email;
 		const authTenantId = req.auth.tenantId;
 		logger.info(
 			`Received request to update order ${id} to status ${orderStatus} by role ${role}`
@@ -223,7 +224,9 @@ export class OrderController {
 		if (!updatedOrder) {
 			throw createHttpError(404, `Order not found!`);
 		}
-		const resDto = new OrderResponseDto(updatedOrder);
+		const resDto = new OrderResponseDto(updatedOrder).setCustomerEmail(
+			email || ''
+		);
 		const msg = buildMessage(OrderEvents.ORDER_STATUS_UPDATE, resDto);
 		await this.messageBroker.sendMessage(Topics.ORDER, msg);
 		res.json(resDto);
