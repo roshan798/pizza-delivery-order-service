@@ -12,6 +12,13 @@ export const Config = {
 	DB_USER: config.get<string>('database.user'),
 	DB_PASSWORD: config.get<string>('database.password'),
 	AUTH_JWKS_URI: config.get<string>('auth.jwksUri'),
-	BROKERS: config.get<string>('kafka.brokers').split(','),
+	BROKERS: config.get<string[]>('kafka.brokers'),
 	STRIPE_SECRET_KEY: config.get<string>('stripe.secret_key'),
+	KAFKA_USERNAME: config.get<string>('kafka.username'),
+	KAFKA_PASSWORD: config.get<string>('kafka.password'),
+	Topics: {
+		Product: config.get<string>('kafka.topics.product'),
+		Topping: config.get<string>('kafka.topics.topping'),
+		Order: config.get<string>('kafka.topics.order'),
+	},
 };

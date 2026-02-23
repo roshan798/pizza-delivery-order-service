@@ -1,4 +1,4 @@
-import { Consumer, Kafka, Producer } from 'kafkajs';
+import { Consumer, Kafka, KafkaConfig, Producer } from 'kafkajs';
 import { MessageBroker } from '../common/MessageBroker';
 import {
 	consumeProductMessageHandler,
@@ -6,16 +6,37 @@ import {
 } from '../Cache/messageHandlers';
 import logger from './logger';
 import { Topics } from '../utils/eventUtils';
+import { Config } from '.';
 
 export class KafkaMessageBroker implements MessageBroker {
 	private producer: Producer;
 	private consumer: Consumer;
 	private kafka: Kafka;
 	constructor(clientId: string, brokers: string[]) {
-		this.kafka = new Kafka({
+		let kafkaConfig: KafkaConfig = {
 			clientId: clientId,
 			brokers: brokers,
-		});
+		};
+		if (Config.NODE_ENV === 'production') {
+			kafkaConfig = {
+				...kafkaConfig,
+				ssl: {
+					rejectUnauthorized: false,
+				},
+				sasl: {
+					mechanism: 'plain',
+					username: Config.KAFKA_USERNAME,
+					password: Config.KAFKA_PASSWORD,
+				},
+				connectionTimeout: 45000,
+				requestTimeout: 45000,
+				retry: {
+					initialRetryTime: 300,
+					retries: 10,
+				},
+			};
+		}
+		this.kafka = new Kafka(kafkaConfig);
 		this.producer = this.kafka.producer();
 		this.consumer = this.kafka.consumer({ groupId: `${clientId}-group` });
 	}
