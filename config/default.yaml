@@ -17,7 +17,7 @@ database:
 auth:
     jwksUri: http://localhost:8081/.well-known/jwks.json
 kafka:
-    brokers: 
+    brokers:
         - localhost:9092
     topics:
         product: product
@@ -29,5 +29,4 @@ kafka:
         mechanism: scram-sha-512
         enabled: false
         ssl:
-            enabled: false  
-
+            enabled: false
